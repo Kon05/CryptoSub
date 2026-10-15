@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoSub · ระบบชำระค่าบริการรายเดือนด้วยคริปโตบน BNB Smart Chain Testnet</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts: Kanit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Ethers.js v6 (UMD) -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+
+    <!-- Tailwind theme -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Kanit', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        darkbg:      '#0B0F17',
+                        cardbg:      '#13213C',
+                        cardborder:  '#1E293B',
+                        cardhover:   '#182238',
+                        bnb:         '#F0B90B',
+                        accentViolet:'#8B5CF6',
+                        accentIndigo:'#6366F1',
+                        accentCyan:  '#06B6D4',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- App styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-yellow-500 selection:text-black">
+
+    <!-- ===================== NAVIGATION ===================== -->
+    <header class="sticky top-0 z-40 glass-header transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+
+                <!-- Brand -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="navigateTo('landing')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-yellow-500 via-amber-400 to-yellow-300 flex items-center justify-center text-slate-950 font-bold text-xl shadow-lg bnb-glow">
+                        <i class="fa-solid font-black fa-cube"></i>
+                    </div>
+                    <div>
+                        <span class="text-2xl font-black bg-gradient-to-r from-yellow-400 via-amber-300 to-purple-400 bg-clip-text text-transparent">CryptoSub</span>
+                        <span class="block text-[10px] text-gray-400 font-normal tracking-wider uppercase -mt-1">BNB Testnet Protocol</span>
+                    </div>
+                </div>
+
+                <!-- Desktop nav -->
+                <nav class="hidden lg:flex items-center space-x-1 text-sm font-medium">
+                    <button onclick="navigateTo('landing')"        id="nav-landing"       class="nav-btn px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition">หน้าแรก</button>
+                    <button onclick="navigateTo('platforms')"      id="nav-platforms"     class="nav-btn px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition">แพลตฟอร์ม & แพ็กเกจ</button>
+                    <button onclick="navigateTo('dashboard')"      id="nav-dashboard"     class="nav-btn px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition">แดชบอร์ดผู้ใช้</button>
+                    <button onclick="navigateTo('subscriptions')"  id="nav-subscriptions" class="nav-btn px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition">จัดการการสมัครสมาชิก</button>
+                    <button onclick="navigateTo('history')"        id="nav-history"       class="nav-btn px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition">ประวัติชำระเงิน</button>
+                    <button onclick="navigateTo('settings')"       id="nav-settings"      class="nav-btn px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition">การตั้งค่า</button>
+                </nav>
+
+                <!-- Wallet area -->
+                <div class="hidden sm:flex items-center space-x-3">
+                    <div class="hidden md:flex items-center space-x-2 bg-slate-900/80 border border-slate-700/60 rounded-full px-3 py-1.5 text-xs text-slate-300">
+                        <span id="net-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                        <span class="font-medium" id="net-label">BSC Testnet (97)</span>
+                    </div>
+
+                    <button id="walletBtn" onclick="openWalletModal()" class="flex items-center space-x-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-semibold px-4 py-2 rounded-xl transition-all shadow-md hover:shadow-yellow-500/20 active:scale-95 text-sm">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span id="walletBtnText">เชื่อมต่อกระเป๋าเงิน</span>
+                    </button>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="lg:hidden flex items-center space-x-2">
+                    <button onclick="openWalletModal()" class="bg-amber-500/10 border border-amber-500/30 text-amber-400 p-2 rounded-lg text-sm">
+                        <i class="fa-solid fa-wallet"></i>
+                    </button>
+                    <button onclick="toggleMobileMenu()" class="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-slate-800 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="hidden lg:hidden bg-slate-900/95 border-b border-slate-800 px-4 pt-2 pb-4 space-y-2">
+            <button onclick="navigateTo('landing'); toggleMobileMenu()"       class="block w-full text-left px-3 py-2 rounded-md text-base text-gray-300 hover:bg-slate-800">หน้าแรก</button>
+            <button onclick="navigateTo('platforms'); toggleMobileMenu()"     class="block w-full text-left px-3 py-2 rounded-md text-base text-gray-300 hover:bg-slate-800">แพลตฟอร์ม & แพ็กเกจ</button>
+            <button onclick="navigateTo('dashboard'); toggleMobileMenu()"     class="block w-full text-left px-3 py-2 rounded-md text-base text-gray-300 hover:bg-slate-800">แดชบอร์ดผู้ใช้</button>
+            <button onclick="navigateTo('subscriptions'); toggleMobileMenu()" class="block w-full text-left px-3 py-2 rounded-md text-base text-gray-300 hover:bg-slate-800">จัดการการสมัครสมาชิก</button>
+            <button onclick="navigateTo('history'); toggleMobileMenu()"       class="block w-full text-left px-3 py-2 rounded-md text-base text-gray-300 hover:bg-slate-800">ประวัติชำระเงิน</button>
+            <button onclick="navigateTo('settings'); toggleMobileMenu()"      class="block w-full text-left px-3 py-2 rounded-md text-base text-gray-300 hover:bg-slate-800">การตั้งค่า</button>
+        </div>
+    </header>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ===== PAGE: LANDING ===== -->
+        <div id="page-landing" class="page-content space-y-16">
+            <section class="relative pt-8 pb-12 overflow-hidden rounded-3xl bg-gradient-to-b from-indigo-950/40 via-slate-900/60 to-transparent border border-slate-800/80 p-8 sm:p-12 text-center sm:text-left flex flex-col md:flex-row items-center justify-between gap-8">
+                <div class="max-w-2xl space-y-6">
+                    <div class="inline-flex items-center space-x-2 bg-yellow-500/10 border border-yellow-500/30 rounded-full px-4 py-1.5 text-xs text-yellow-400 font-medium">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>รองรับ tBNB และ SubCoin (SUB) บน BSC Testnet</span>
+                    </div>
+                    <h1 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-white">
+                        ระบบจัดการและชำระค่าบริการรายเดือนด้วยบล็อกเชน
+                    </h1>
+                    <p class="text-base sm:text-lg text-slate-300 leading-relaxed">
+                        สมัครบริการ SaaS, ความบันเทิง และ AI Tool ด้วย tBNB หรือ SubCoin (SUB) บนเครือข่าย BSC Testnet แบบไร้ตัวกลาง ปลอดภัย ตรวจสอบได้
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center sm:justify-start pt-2">
+                        <button onclick="openWalletModal()" class="px-6 py-3.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-bold shadow-lg shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 transition flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-wallet"></i>
+                            <span>เชื่อมต่อกระเป๋าเงิน</span>
+                        </button>
+                        <button onclick="navigateTo('platforms')" class="px-6 py-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-white font-semibold border border-slate-700/80 hover:scale-[1.02] active:scale-95 transition flex items-center justify-center space-x-2">
+                            <span>เลือกแพลตฟอร์มที่ต้องการสมัคร</span>
+                            <i class="fa-solid fa-arrow-right text-xs text-amber-400"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative w-full max-w-md flex justify-center">
+                    <div class="w-72 h-72 sm:w-80 sm:h-80 rounded-3xl bg-gradient-to-tr from-purple-950 via-slate-900 to-indigo-900 p-6 border border-purple-500/30 shadow-2xl relative violet-glow flex flex-col justify-between">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-lg bg-yellow-500 text-black flex items-center justify-center font-bold text-[11px]">SUB</div>
+                                <div>
+                                    <p class="text-xs text-slate-400">SubCoin Token</p>
+                                    <p class="text-xs font-bold text-white">BSC Testnet</p>
+                                </div>
+                            </div>
+                            <span class="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-full font-medium border border-emerald-500/30">Active</span>
+                        </div>
+                        <div class="my-4 space-y-3">
+                            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/50 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-robot"></i></div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-white">ChatGPT Plus</p>
+                                        <p class="text-[10px] text-slate-400">Pro Plan · 30 วัน</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-yellow-400">15 SUB</span>
+                            </div>
+                            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/50 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center"><i class="fa-solid fa-tv"></i></div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-white">Netflix Ultra 4K</p>
+                                        <p class="text-[10px] text-slate-400">Premium · 30 วัน</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-yellow-400">18 SUB</span>
+                            </div>
+                        </div>
+                        <div class="text-center pt-2 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+                            <span>SubCoin Contract</span>
+                            <a href="https://testnet.bscscan.com/token/0xcb14E5EfcaA05Dd4B20fad9bD0fa1c8A10f96DDf" target="_blank" rel="noopener" class="text-cyan-400 font-mono hover:underline">0xcb14…6DDf</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-card p-5 rounded-2xl text-center">
+                    <p class="text-xs text-slate-400 mb-1">ยอดชำระสะสมรวม</p>
+                    <p class="text-2xl sm:text-3xl font-black text-yellow-400" id="stat-total-paid">0 tBNB</p>
+                    <p class="text-[10px] text-slate-500 mt-1">รวม tBNB + SUB</p>
+                </div>
+                <div class="glass-card p-5 rounded-2xl text-center">
+                    <p class="text-xs text-slate-400 mb-1">สับสคริปชันที่ใช้งานอยู่</p>
+                    <p class="text-2xl sm:text-3xl font-black text-indigo-400" id="stat-active-subs">0</p>
+                    <p class="text-[10px] text-slate-500 mt-1">อัปเดตเรียลไทม์</p>
+                </div>
+                <div class="glass-card p-5 rounded-2xl text-center">
+                    <p class="text-xs text-slate-400 mb-1">แพลตฟอร์มที่รองรับ</p>
+                    <p class="text-2xl sm:text-3xl font-black text-cyan-400" id="stat-platform-count">6</p>
+                    <p class="text-[10px] text-slate-500 mt-1">AI, Streaming, Design</p>
+                </div>
+                <div class="glass-card p-5 rounded-2xl text-center">
+                    <p class="text-xs text-slate-400 mb-1">SubCoin Supply</p>
+                    <p class="text-2xl sm:text-3xl font-black text-emerald-400">1M</p>
+                    <p class="text-[10px] text-slate-500 mt-1">SUB · ตรวจสอบบน BscScan</p>
+                </div>
+            </div>
+
+            <section class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">แพลตฟอร์มยอดนิยม</h2>
+                        <p class="text-sm text-slate-400">เลือกลองสมัครสมาชิกแพลตฟอร์มระดับโลกด้วย tBNB หรือ SUB</p>
+                    </div>
+                    <button onclick="navigateTo('platforms')" class="text-sm font-semibold text-yellow-400 hover:text-yellow-300 flex items-center space-x-1">
+                        <span>ดูทั้งหมด</span>
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </div>
+                <div id="landing-platform-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </section>
+
+            <section class="space-y-6 pt-6">
+                <div class="text-center max-w-xl mx-auto">
+                    <h2 class="text-2xl font-bold text-white">ทำไมต้องใช้ CryptoSub?</h2>
+                    <p class="text-sm text-slate-400 mt-1">เปลี่ยนผ่านสู่ยุคชำระเงิน Web3 อย่างสมบูรณ์แบบ</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="glass-card p-6 rounded-2xl space-y-3 border-t-2 border-t-purple-500">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl"><i class="fa-solid fa-shield-halved"></i></div>
+                        <h3 class="font-bold text-lg text-white">ความปลอดภัยสูง</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">ไม่ต้องผูกบัตรเครดิต เซ็นธุรกรรมผ่านกระเป๋าเงินของคุณเอง</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl space-y-3 border-t-2 border-t-yellow-500">
+                        <div class="w-12 h-12 rounded-xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-xl"><i class="fa-solid fa-coins"></i></div>
+                        <h3 class="font-bold text-lg text-white">สองสกุลเงิน</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">เลือกชำระด้วย tBNB หรือใช้โทเคน SubCoin (SUB) ของระบบได้ตามต้องการ</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl space-y-3 border-t-2 border-t-cyan-500">
+                        <div class="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl"><i class="fa-solid fa-eye"></i></div>
+                        <h3 class="font-bold text-lg text-white">โปร่งใสตรวจสอบได้</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">ทุกธุรกรรมบันทึกบน BscScan Testnet ดูได้ทันทีจากประวัติชำระเงิน</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl space-y-3 border-t-2 border-t-emerald-500">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl"><i class="fa-solid fa-rotate-left"></i></div>
+                        <h3 class="font-bold text-lg text-white">ยกเลิกได้ตลอดเวลา</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">ไม่มีสัญญาผูกมัด ปิด Auto-Renew ได้ทันทีจากแดชบอร์ด</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ===== PAGE: PLATFORMS ===== -->
+        <div id="page-platforms" class="page-content space-y-8 hidden">
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <h1 class="text-3xl font-black text-white">เลือกแพลตฟอร์มและแพ็กเกจ</h1>
+                <p class="text-sm text-slate-400">ชำระด้วย tBNB หรือ SubCoin (SUB) บน BNB Smart Chain Testnet</p>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-center gap-2 border-b border-slate-800 pb-4">
+                <button onclick="filterPlatforms('all')"       id="tab-all"       class="cat-tab px-4 py-2 rounded-xl text-sm font-semibold bg-yellow-500 text-slate-950 transition">ทั้งหมด</button>
+                <button onclick="filterPlatforms('ai')"        id="tab-ai"        class="cat-tab px-4 py-2 rounded-xl text-sm font-medium bg-slate-800/80 text-slate-300 hover:text-white transition">เครื่องมือ AI</button>
+                <button onclick="filterPlatforms('streaming')" id="tab-streaming" class="cat-tab px-4 py-2 rounded-xl text-sm font-medium bg-slate-800/80 text-slate-300 hover:text-white transition">ความบันเทิง</button>
+                <button onclick="filterPlatforms('design')"    id="tab-design"    class="cat-tab px-4 py-2 rounded-xl text-sm font-medium bg-slate-800/80 text-slate-300 hover:text-white transition">งานออกแบบ</button>
+                <button onclick="filterPlatforms('crypto')"    id="tab-crypto"    class="cat-tab px-4 py-2 rounded-xl text-sm font-medium bg-slate-800/80 text-slate-300 hover:text-white transition">บริการ Crypto</button>
+            </div>
+
+            <div id="platform-plans-container" class="space-y-12"></div>
+        </div>
+
+        <!-- ===== PAGE: DASHBOARD ===== -->
+        <div id="page-dashboard" class="page-content space-y-8 hidden">
+            <div class="glass-card p-6 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-l-4 border-l-yellow-500">
+                <div class="space-y-1">
+                    <div class="flex items-center space-x-3">
+                        <h1 class="text-2xl font-black text-white">แดชบอร์ดผู้ใช้งาน</h1>
+                        <span id="dash-net-badge" class="bg-slate-700/40 text-slate-300 text-xs px-2.5 py-1 rounded-full font-medium border border-slate-700">ยังไม่เชื่อมต่อ</span>
+                    </div>
+                    <p class="text-xs text-slate-400">
+                        ที่อยู่กระเป๋า: <span id="dash-wallet-address" class="font-mono text-yellow-400 font-semibold">ยังไม่ได้เชื่อมต่อ</span>
+                        <span id="dash-wallet-suffix" class="hidden ml-2">
+                            · <a id="dash-sub-link" href="#" target="_blank" rel="noopener" class="text-cyan-400 hover:underline font-mono">SUB token on BscScan</a>
+                        </span>
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400">tBNB</p>
+                        <p id="dash-wallet-balance" class="text-xl font-bold text-yellow-400">0.00</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-slate-400">SUB</p>
+                        <p id="dash-sub-balance" class="text-xl font-bold text-emerald-400">0.00</p>
+                    </div>
+                    <button onclick="refreshWalletBalances(true)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
+                        <i class="fa-solid fa-arrows-rotate text-cyan-400"></i>
+                        <span>รีเฟรช</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="glass-card p-6 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400">สับสคริปชันที่ใช้งานอยู่</p>
+                        <p id="user-active-count" class="text-3xl font-black text-white mt-1">0</p>
+                        <p class="text-[10px] text-slate-500 mt-1">บริการที่ยังไม่หมดอายุ</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl"><i class="fa-solid fa-list-check"></i></div>
+                </div>
+                <div class="glass-card p-6 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400">ค่าบริการรวมต่อเดือน</p>
+                        <p id="user-monthly-expense" class="text-3xl font-black text-yellow-400 mt-1">0</p>
+                        <p class="text-[10px] text-slate-500 mt-1">คำนวณจากแพ็กเกจปัจจุบัน</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-xl"><i class="fa-solid fa-wallet"></i></div>
+                </div>
+                <div class="glass-card p-6 rounded-2xl flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400">ใกล้หมดอายุ (&le; 7 วัน)</p>
+                        <p id="user-expiring-count" class="text-3xl font-black text-rose-400 mt-1">0</p>
+                        <p class="text-[10px] text-slate-500 mt-1">ควรพิจารณาต่ออายุ</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl"><i class="fa-solid fa-clock"></i></div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <button onclick="navigateTo('platforms')" class="px-4 py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold text-sm flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-plus"></i><span>สมัครบริการใหม่</span>
+                </button>
+                <button onclick="renewAllSubscriptions()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-arrows-rotate text-emerald-400"></i><span>ต่ออายุทั้งหมด</span>
+                </button>
+                <button onclick="navigateTo('subscriptions')" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-sliders text-cyan-400"></i><span>จัดการสับสคริปชัน</span>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-circle-play text-yellow-400"></i>
+                    <span>รายการสมัครสมาชิกที่กำลังใช้งาน</span>
+                </h2>
+                <div id="dashboard-active-subs-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div class="space-y-4 pt-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-receipt text-cyan-400"></i>
+                        <span>ประวัติการชำระเงินล่าสุด</span>
+                    </h2>
+                    <button onclick="navigateTo('history')" class="text-xs font-semibold text-yellow-400 hover:underline">ดูประวัติทั้งหมด &rarr;</button>
+                </div>
+                <div class="glass-card rounded-2xl overflow-hidden border border-slate-800">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                                <tr>
+                                    <th class="p-3.5">วันที่และเวลา</th>
+                                    <th class="p-3.5">แพลตฟอร์ม</th>
+                                    <th class="p-3.5">แพ็กเกจ</th>
+                                    <th class="p-3.5">จำนวนเงิน</th>
+                                    <th class="p-3.5">สถานะ</th>
+                                    <th class="p-3.5">Tx Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dash-recent-tx-tbody" class="divide-y divide-slate-800/60"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: SUBSCRIPTIONS ===== -->
+        <div id="page-subscriptions" class="page-content space-y-8 hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-black text-white">จัดการการสมัครสมาชิก</h1>
+                    <p class="text-sm text-slate-400">ตรวจสอบ ต่ออายุ เปลี่ยนแพ็กเกจ หรือยกเลิกการสมัครได้ทุกเมื่อ</p>
+                </div>
+                <button onclick="navigateTo('platforms')" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-bold text-sm flex items-center space-x-2 self-start md:self-auto">
+                    <i class="fa-solid fa-plus"></i><span>สมัครแพลตฟอร์มใหม่</span>
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-2 border-b border-slate-800 pb-3">
+                <button onclick="filterSubManagement('all')"      id="subm-tab-all"      class="subm-tab px-4 py-1.5 rounded-lg text-xs font-semibold bg-yellow-500 text-slate-950 transition">ทั้งหมด</button>
+                <button onclick="filterSubManagement('active')"   id="subm-tab-active"   class="subm-tab px-4 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:text-white transition">เปิดใช้งานอยู่</button>
+                <button onclick="filterSubManagement('canceled')" id="subm-tab-canceled" class="subm-tab px-4 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:text-white transition">ยกเลิกแล้ว</button>
+                <button onclick="filterSubManagement('expired')"  id="subm-tab-expired"  class="subm-tab px-4 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:text-white transition">หมดอายุแล้ว</button>
+            </div>
+
+            <div id="management-cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </div>
+
+        <!-- ===== PAGE: HISTORY ===== -->
+        <div id="page-history" class="page-content space-y-6 hidden">
+            <div>
+                <h1 class="text-3xl font-black text-white">ประวัติการชำระเงิน</h1>
+                <p class="text-sm text-slate-400">รายการธุรกรรมบน BNB Smart Chain Testnet ทั้งหมดของคุณ</p>
+            </div>
+
+            <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="relative w-full sm:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+                    <input type="text" id="history-search" oninput="renderPaymentHistory()" placeholder="ค้นหาตามแพลตฟอร์ม / Tx Hash..." class="w-full bg-slate-900 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-yellow-500">
+                </div>
+                <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                    <span class="text-xs text-slate-400">สถานะ:</span>
+                    <select id="history-status-filter" onchange="renderPaymentHistory()" class="bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-yellow-500">
+                        <option value="all">ทั้งหมด</option>
+                        <option value="completed">สำเร็จ (Completed)</option>
+                        <option value="pending">รอดำเนินการ (Pending)</option>
+                        <option value="failed">ล้มเหลว (Failed)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl overflow-hidden border border-slate-800">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-900/90 text-slate-400 border-b border-slate-800 font-semibold">
+                            <tr>
+                                <th class="p-4">วันที่และเวลา</th>
+                                <th class="p-4">แพลตฟอร์ม</th>
+                                <th class="p-4">แพ็กเกจ</th>
+                                <th class="p-4">จำนวนเงิน</th>
+                                <th class="p-4">สถานะ</th>
+                                <th class="p-4">Tx Hash (BSC Testnet)</th>
+                                <th class="p-4 text-center">การกระทำ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-tbody" class="divide-y divide-slate-800/60"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: SETTINGS ===== -->
+        <div id="page-settings" class="page-content space-y-8 max-w-3xl mx-auto hidden">
+            <div>
+                <h1 class="text-3xl font-black text-white">การตั้งค่า (Settings)</h1>
+                <p class="text-sm text-slate-400">จัดการข้อมูลส่วนตัว การแจ้งเตือน และกระเป๋าเงิน</p>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl space-y-4">
+                <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-user text-amber-400"></i>
+                    <span>ข้อมูลส่วนตัวและการแจ้งเตือน</span>
+                </h2>
+                <div class="space-y-4 text-xs">
+                    <div>
+                        <label class="block text-slate-300 font-medium mb-1">ชื่อผู้ใช้งาน (Display Name)</label>
+                        <input type="text" id="setting-username" value="Satoshi Nakamoto (TH)" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-300 font-medium mb-1">อีเมลสำหรับรับการเตือนเมื่อใกล้หมดอายุ</label>
+                        <input type="email" id="setting-email" value="crypto.sub.user@example.com" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-yellow-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl space-y-4">
+                <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-coins text-emerald-400"></i>
+                    <span>SubCoin (SUB) Token</span>
+                </h2>
+                <div class="text-xs space-y-3">
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Contract address:</span>
+                            <a href="https://testnet.bscscan.com/token/0xcb14E5EfcaA05Dd4B20fad9bD0fa1c8A10f96DDf" target="_blank" rel="noopener" class="font-mono text-cyan-400 hover:underline">0xcb14E5Ef…96DDf</a>
+                        </div>
+                        <div class="flex justify-between"><span class="text-slate-400">Symbol / Decimals:</span><span class="text-white">SUB · 18</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">เครือข่าย:</span><span class="text-white">BNB Smart Chain Testnet (97)</span></div>
+                    </div>
+                    <p class="text-slate-500 leading-relaxed">
+                        โทเคน SUB ถูกใช้เป็นช่องทางชำระเงินทางเลือกสำหรับสับสคริปชัน เลือกชำระด้วย SUB ได้ในขั้นตอนยืนยันการชำระเงิน (Demo rate 1 tBNB = 1 SUB)
+                    </p>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl space-y-4">
+                <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-bell text-cyan-400"></i>
+                    <span>การแจ้งเตือน & Web3</span>
+                </h2>
+                <div class="space-y-4 text-xs">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-white">แจ้งเตือนเมื่อสับสคริปชันใกล้หมดอายุ</p>
+                            <p class="text-slate-400 text-[11px]">แสดงบนแดชบอร์ดเมื่อเหลือ &le; 7 วัน</p>
+                        </div>
+                        <input type="checkbox" checked class="w-4 h-4 accent-yellow-500 rounded cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-800 pt-3">
+                        <div>
+                            <p class="font-semibold text-white">รีเฟรชยอดเงินอัตโนมัติ (ทุก 15 วินาที)</p>
+                            <p class="text-slate-400 text-[11px]">อัปเดตยอด tBNB และ SUB จาก BSC Testnet</p>
+                        </div>
+                        <input type="checkbox" id="setting-autorefresh" checked onchange="toggleAutoRefresh()" class="w-4 h-4 accent-yellow-500 rounded cursor-pointer">
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-800 pt-3">
+                        <div>
+                            <p class="font-semibold text-white">ภาษาที่แสดงผล (Language)</p>
+                            <p class="text-slate-400 text-[11px]">ปัจจุบันเลือกภาษาไทย</p>
+                        </div>
+                        <select class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white">
+                            <option value="th">ภาษาไทย (Thai)</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="saveUserSettings()" class="px-6 py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold text-sm shadow-md transition">
+                    บันทึกการตั้งค่า
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="bg-slate-950 border-t border-slate-800/80 py-8 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 rounded bg-yellow-500 text-black flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-cube"></i></div>
+                <span class="font-bold text-slate-300">CryptoSub Platform</span>
+                <span>&copy; 2026 · ระบบชำระค่าบริการรายเดือนบน BNB Smart Chain Testnet</span>
+            </div>
+            <div class="flex items-center space-x-4 text-slate-400">
+                <span class="flex items-center space-x-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>BSC Testnet · Operational</span>
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===================== MODAL: WALLET ===================== -->
+    <div id="walletModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-card bg-slate-900 border border-slate-700 w-full max-w-md rounded-3xl p-6 space-y-6 relative">
+            <button onclick="closeWalletModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+
+            <div class="text-center space-y-1">
+                <div class="w-14 h-14 rounded-2xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-2xl mx-auto mb-2"><i class="fa-solid fa-wallet"></i></div>
+                <h3 class="text-xl font-bold text-white">เชื่อมต่อกระเป๋าเงิน (Connect Wallet)</h3>
+                <p class="text-xs text-slate-400">เชื่อมต่อผ่าน MetaMask หรือใช้ Demo Wallet สำหรับทดลอง</p>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="connectMetaMask()" class="w-full p-4 rounded-2xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 flex items-center justify-between transition group">
+                    <div class="flex items-center space-x-3">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" class="w-8 h-8">
+                        <div class="text-left">
+                            <p class="text-sm font-bold text-white group-hover:text-yellow-400">MetaMask Web3 Wallet</p>
+                            <p class="text-[10px] text-slate-400">อ่านยอดจริงจาก BSC Testnet · ส่งธุรกรรมได้จริง</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:text-white"></i>
+                </button>
+
+                <button onclick="connectDemoWallet()" class="w-full p-4 rounded-2xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 flex items-center justify-between transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold"><i class="fa-solid fa-flask"></i></div>
+                        <div class="text-left">
+                            <p class="text-sm font-bold text-white group-hover:text-yellow-400">Demo Wallet (ทดลอง)</p>
+                            <p class="text-[10px] text-slate-400">สุ่มกระเป๋า · 100 tBNB + 500 SUB · จำลองธุรกรรม</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:text-white"></i>
+                </button>
+            </div>
+
+            <div id="wallet-status-info" class="bg-slate-950 p-4 rounded-2xl space-y-2 border border-slate-800 text-xs text-slate-300">
+                <div class="flex justify-between">
+                    <span class="text-slate-500">สถานะ:</span>
+                    <span id="modal-wallet-connected-status" class="font-bold text-rose-400">ยังไม่ได้เชื่อมต่อ</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">โหมด:</span>
+                    <span id="modal-wallet-mode" class="font-mono text-slate-300">—</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">ที่อยู่กระเป๋า:</span>
+                    <span id="modal-wallet-address" class="font-mono text-yellow-400">0x00...0000</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">tBNB:</span>
+                    <span id="modal-wallet-balance" class="font-bold text-yellow-400">0.0000</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">SUB:</span>
+                    <span id="modal-sub-balance" class="font-bold text-emerald-400">0.00</span>
+                </div>
+                <div class="pt-2 border-t border-slate-800 flex justify-between">
+                    <span class="text-slate-500">SUB Contract:</span>
+                    <a href="https://testnet.bscscan.com/token/0xcb14E5EfcaA05Dd4B20fad9bD0fa1c8A10f96DDf" target="_blank" rel="noopener" class="font-mono text-cyan-400 hover:underline">0xcb14…96DDf ↗</a>
+                </div>
+            </div>
+
+            <div class="flex space-x-2">
+                <button id="modal-disconnect-btn" onclick="disconnectWallet()" class="hidden w-full py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-semibold text-xs transition">
+                    ตัดการเชื่อมต่อกระเป๋า
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL: PAYMENT ===================== -->
+    <div id="paymentModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-card bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl p-6 space-y-6 relative">
+            <button onclick="closePaymentModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+
+            <!-- STEP: REVIEW -->
+            <div id="payment-step-review" class="space-y-6">
+                <div class="text-center space-y-1">
+                    <div class="w-12 h-12 rounded-2xl bg-yellow-500/20 text-yellow-400 flex items-center justify-center text-xl mx-auto mb-2"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <h3 class="text-xl font-bold text-white">ยืนยันการชำระเงินสับสคริปชัน</h3>
+                    <p class="text-xs text-slate-400">ตรวจสอบรายละเอียดก่อนส่งธุรกรรมไปยัง BNB Testnet</p>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-2xl space-y-3 text-xs border border-slate-800">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                        <span class="text-slate-400">แพลตฟอร์ม:</span>
+                        <span id="pay-platform-name" class="font-bold text-white text-sm">—</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">แพ็กเกจ:</span>
+                        <span id="pay-plan-name" class="font-medium text-indigo-400">—</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">ระยะเวลา:</span>
+                        <span class="font-medium text-white">30 วัน (1 เดือน)</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400">ผู้ชำระ:</span>
+                        <span id="pay-wallet-address" class="font-mono text-yellow-400">—</span>
+                    </div>
+                </div>
+
+                <!-- Payment method selector -->
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold text-slate-300">ช่องทางชำระเงิน</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="pay-method-tbnb" onclick="selectPaymentMethod('tbnb')" class="p-3 rounded-2xl border-2 text-left transition-all">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 rounded-lg bg-yellow-500 text-black flex items-center justify-center font-bold text-[10px]">tBNB</div>
+                                    <div>
+                                        <p class="text-sm font-bold text-white">tBNB</p>
+                                        <p class="text-[10px] text-slate-400">Native BNB Testnet</p>
+                                    </div>
+                                </div>
+                                <i class="fa-regular fa-circle-check method-check text-xl"></i>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2">ยอดคงเหลือ: <span id="pay-bal-tbnb" class="font-mono text-yellow-400">0.00</span></p>
+                        </button>
+
+                        <button id="pay-method-sub" onclick="selectPaymentMethod('sub')" class="p-3 rounded-2xl border-2 text-left transition-all">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-500 text-slate-950 flex items-center justify-center font-bold text-[10px]">SUB</div>
+                                    <div>
+                                        <p class="text-sm font-bold text-white">SubCoin</p>
+                                        <p class="text-[10px] text-slate-400">ERC-20 · BSC</p>
+                                    </div>
+                                </div>
+                                <i class="fa-regular fa-circle-check method-check text-xl"></i>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2">ยอดคงเหลือ: <span id="pay-bal-sub" class="font-mono text-emerald-400">0.00</span></p>
+                        </button>
+                    </div>
+                    <p id="pay-rate-note" class="text-[10px] text-slate-500">Demo rate: 1 tBNB = 1 SUB · จำนวนที่ต้องชำระเท่ากันทั้งสองช่องทาง</p>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+                    <span class="text-slate-300 font-bold text-sm">ยอดที่ต้องชำระสุทธิ:</span>
+                    <span id="pay-amount-final" class="text-lg font-black text-yellow-400">0 tBNB</span>
+                </div>
+
+                <div id="pay-error" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-xl p-3"></div>
+
+                <button id="pay-confirm-btn" onclick="processPaymentTransaction()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-slate-950 font-bold text-sm shadow-lg shadow-yellow-500/20 transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    ยืนยันชำระเงิน
+                </button>
+            </div>
+
+            <!-- STEP: PROCESSING -->
+            <div id="payment-step-processing" class="hidden text-center py-8 space-y-4">
+                <div class="w-16 h-16 border-4 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin mx-auto"></div>
+                <div>
+                    <h4 id="pay-processing-title" class="text-lg font-bold text-white">กำลังส่งธุรกรรมไปยัง BNB Testnet...</h4>
+                    <p id="pay-processing-subtitle" class="text-xs text-slate-400 mt-1">กรุณายืนยันธุรกรรมใน MetaMask ของคุณ</p>
+                </div>
+            </div>
+
+            <!-- STEP: SUCCESS -->
+            <div id="payment-step-success" class="hidden text-center space-y-6">
+                <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-3xl mx-auto"><i class="fa-solid fa-check"></i></div>
+                <div class="space-y-1">
+                    <h3 class="text-xl font-bold text-white">ชำระเงินสำเร็จแล้ว!</h3>
+                    <p class="text-xs text-slate-400">สับสคริปชันเปิดใช้งานแล้วเรียบร้อย</p>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-2xl text-xs space-y-2 text-left border border-slate-800">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">ช่องทาง:</span>
+                        <span id="pay-success-method" class="font-bold text-white">—</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Tx Hash:</span>
+                        <a id="pay-success-txhash" href="#" target="_blank" rel="noopener" class="font-mono text-cyan-400 hover:underline">—</a>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">วันหมดอายุใหม่:</span>
+                        <span id="pay-success-expiry" class="font-bold text-white">—</span>
+                    </div>
+                </div>
+
+                <button onclick="closePaymentModal(); navigateTo('subscriptions')" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition">
+                    ไปที่หน้าจัดการการสมัครสมาชิก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODAL: CANCEL ===================== -->
+    <div id="cancelModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="glass-card bg-slate-900 border border-slate-700 w-full max-w-md rounded-3xl p-6 space-y-6 relative">
+            <button onclick="closeCancelModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl mx-auto mb-2"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h3 class="text-xl font-bold text-white">ยืนยันยกเลิกการสมัครสมาชิก</h3>
+                <p class="text-xs text-slate-400">คุณยังสามารถใช้งานต่อได้จนกว่าจะครบกำหนดในรอบปัจจุบัน</p>
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl text-xs space-y-2 border border-slate-800">
+                <p class="text-slate-300 font-semibold" id="cancel-target-platform">—</p>
+                <p class="text-slate-400">วันหมดอายุรอบนี้: <span id="cancel-target-expiry" class="text-white font-mono">—</span></p>
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-xs text-slate-300">เหตุผลในการยกเลิก (ระบุเพื่อการพัฒนา):</label>
+                <select id="cancel-reason-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none">
+                    <option value="expensive">ค่าบริการสูงเกินไป</option>
+                    <option value="rarely_used">ไม่ค่อยได้เข้าใช้งาน</option>
+                    <option value="switched">เปลี่ยนไปใช้แพลตฟอร์มอื่นแทน</option>
+                    <option value="other">เหตุผลอื่นๆ</option>
+                </select>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="closeCancelModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition">ยกเลิก/ย้อนกลับ</button>
+                <button onclick="confirmCancelSubscriptionAction()" class="w-1/2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/20 transition">ยืนยันยกเลิกบริการ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== DEV TOOLBAR ===================== -->
+    <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-full px-4 py-2 shadow-2xl flex items-center space-x-3 text-xs">
+        <span class="text-yellow-400 font-bold flex items-center space-x-1">
+            <i class="fa-solid fa-code"></i><span class="hidden sm:inline">Dev:</span>
+        </span>
+        <button onclick="devToggleWallet()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-full border border-slate-700">
+            <i class="fa-solid fa-power-off text-emerald-400"></i> สลับกระเป๋า
+        </button>
+        <button onclick="devAddBalance()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-full border border-slate-700">
+            <i class="fa-solid fa-plus text-yellow-400"></i> +50 tBNB
+        </button>
+        <button onclick="devAddSub()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-full border border-slate-700">
+            <i class="fa-solid fa-plus text-emerald-400"></i> +100 SUB
+        </button>
+        <button onclick="resetDemoData()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-full border border-slate-700">
+            <i class="fa-solid fa-rotate-right text-cyan-400"></i> รีเซ็ต
+        </button>
+    </div>
+
+    <!-- App script -->
+    <script src="app.js"></script>
+</body>
+</html>

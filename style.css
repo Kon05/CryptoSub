@@ -1,0 +1,120 @@
+/* =========================================================================
+   CryptoSub · Custom styles complementing Tailwind
+   ========================================================================= */
+
+body {
+    background-color: #0B0F17;
+    color: #F3F4F6;
+    font-family: 'Kanit', sans-serif;
+    overflow-x: hidden;
+}
+
+/* ---- Header ---- */
+.glass-header {
+    background: rgba(11, 15, 23, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ---- Cards ---- */
+.glass-card {
+    background: rgba(19, 33, 60, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.glass-card:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* ---- Glow ---- */
+.bnb-glow {
+    box-shadow: 0 0 20px rgba(240, 185, 11, 0.25);
+}
+
+.violet-glow {
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.3);
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #0B0F17;
+}
+::-webkit-scrollbar-thumb {
+    background: #1E293B;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* ---- Active nav ---- */
+.active-nav-item {
+    color: #F0B90B !important;
+    border-bottom: 2px solid #F0B90B;
+}
+
+/* ---- Payment method selector states ---- */
+#pay-method-tbnb,
+#pay-method-sub {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(2, 6, 23, 0.6);
+}
+
+#pay-method-tbnb:hover,
+#pay-method-sub:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.method-active-tbnb {
+    border-color: #F0B90B !important;
+    background: rgba(240, 185, 11, 0.08) !important;
+    box-shadow: 0 0 0 3px rgba(240, 185, 11, 0.1);
+}
+.method-active-tbnb .method-check {
+    color: #F0B90B;
+    font-weight: 900;
+}
+
+.method-active-sub {
+    border-color: #10B981 !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+.method-active-sub .method-check {
+    color: #10B981;
+    font-weight: 900;
+}
+
+/* ---- Toast ---- */
+#toast-container {
+    pointer-events: none;
+}
+#toast-container > div {
+    pointer-events: auto;
+}
+
+/* ---- Small animation ---- */
+@keyframes pulseSoft {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.55; }
+}
+.animate-pulse-slow {
+    animation: pulseSoft 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ---- Line-clamp fallback (in case Tailwind plugin not loaded) ---- */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
