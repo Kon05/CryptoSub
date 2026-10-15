@@ -11,8 +11,7 @@
 - `app.js` — ตรรกะการเชื่อมต่อ MetaMask, การอ่านยอดเงินจาก BSC Testnet และการส่งธุรกรรมชำระเงินจริง
 - `style.css` — สไตล์เสริมของโปรเจกต์ที่ทำงานร่วมกับ Tailwind CSS
 - `SUB.sol` — Smart Contract ตัวอย่างของโทเคน **SubCoin (SUB)** มาตรฐาน ERC-20/BEP-20
-- `.gitignore` — รายการไฟล์ที่ไม่ควรส่งขึ้น GitHub
-
+- 
 ## สิ่งที่ต้องมีก่อน
 
 - Browser ที่ติดตั้ง MetaMask
